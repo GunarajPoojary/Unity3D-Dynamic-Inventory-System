@@ -4,11 +4,11 @@ using System;
 /// <summary>
 /// Runtime Item Data class used by Inventory.
 /// </summary>
-[System.Serializable]
+[Serializable]
 public class InventoryItem
 {
     private ItemConfigSO _item;
-    private int _stackCount;
+    private int _stackCount = 1;
 
     public ItemConfigSO Item => _item;
     public int StackCount => _stackCount;
@@ -16,11 +16,12 @@ public class InventoryItem
 
     public InventoryItem(ItemConfigSO item, int stackCount = 1)
     {
-        if (item == null) throw new ArgumentNullException(nameof(item), "ItemConfigSO cannot be null.");
+        if (item == null || stackCount < 1) throw new ArgumentNullException(nameof(item),
+                                                                            "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
 
         _item = item;
 
-        _stackCount = Mathf.Clamp(stackCount, 1, item.MaxStack);
+        _stackCount = stackCount;
     }
 
     /// <summary>
@@ -30,11 +31,11 @@ public class InventoryItem
     /// <param name="stackCount"></param>
     public void ResetItem(ItemConfigSO item, int stackCount = 1)
     {
-        if (item == null) throw new ArgumentNullException(nameof(item), "ItemConfigSO cannot be null.");
-
+        if (item == null || stackCount < 1) throw new ArgumentNullException(nameof(item),
+                                                                                    "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
         _item = item;
 
-        _stackCount = Mathf.Clamp(stackCount, 1, item.MaxStack);
+        _stackCount = stackCount;
     }
 
     /// <summary>
@@ -54,10 +55,12 @@ public class InventoryItem
     /// // Method to remove items from the stack
     /// </summary>
     /// <param name="amount"></param>
-    public void PopStack(int amount)
+    public bool PopStack(int amount)
     {
-        if (amount <= 0) return;
+        if (amount < 1) throw new ArgumentNullException(nameof(amount), "amount cannot be less than 1.");
 
         _stackCount = Mathf.Max(0, _stackCount - amount); // Subtract the amount while preventing negative stack counts
+
+        return _stackCount < 0;
     }
 }
