@@ -30,7 +30,7 @@ public class Inventory
     /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(ItemConfigSO worldItem, int quantity = 1)
     {
-        if (worldItem == null || quantity < 1) return;
+        if (worldItem == null || quantity < 1)  throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null.");;
 
         if (_currentCapacity >= MaxCapacity)
         {
