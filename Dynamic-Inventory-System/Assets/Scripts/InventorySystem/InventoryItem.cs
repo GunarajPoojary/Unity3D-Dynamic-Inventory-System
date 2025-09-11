@@ -7,6 +7,8 @@ using System;
 [Serializable]
 public class InventoryItem
 {
+    private static int _nextID = 0;
+    public int ID { get; }
     private ItemConfigSO _item;
     private int _stackCount = 1;
 
@@ -16,8 +18,11 @@ public class InventoryItem
 
     public InventoryItem(ItemConfigSO item, int stackCount = 1)
     {
-        if (item == null || stackCount < 1) throw new ArgumentNullException(nameof(item),
-                                                                            "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
+        if (item == null || stackCount < 1) throw new ArgumentNullException(
+            nameof(item),
+            "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
+
+        ID = ++_nextID;
 
         _item = item;
 

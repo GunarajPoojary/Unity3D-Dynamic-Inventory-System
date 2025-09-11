@@ -1,13 +1,12 @@
 using UnityEngine;
 
-/// <summary>
-/// Represents the data for an inventory item.
-/// </summary>
 [CreateAssetMenu(fileName = "NewItem", menuName = "Inventory/Item")]
 public class ItemConfigSO : DescriptionBaseSO
 {
+    public int ItemID = 0; // Default is set 0, which means the ID is unassigned.
+
     [Header("Stacking Rules")]
-    [Range(1, 99)][SerializeField] private int _maxStack;
+    [Range(1, 99)][SerializeField] private int _maxStack = 1;
 
     [Header("General Info")]
     [field: SerializeField] public string ItemName { get; private set; }

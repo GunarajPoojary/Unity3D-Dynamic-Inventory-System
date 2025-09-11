@@ -14,6 +14,7 @@ public class Inventory
 
     private readonly Dictionary<int, InventoryItem> _items = new();
     public IReadOnlyDictionary<int, InventoryItem> Items => _items;
+
     private int _currentCapacity = 0;
 
     #region Events
@@ -30,11 +31,60 @@ public class Inventory
     /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(ItemConfigSO worldItem, int quantity = 1)
     {
-        if (worldItem == null || quantity < 1)  throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null.");;
+        if (worldItem == null || quantity < 1) throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null."); ;
 
         if (_currentCapacity >= MaxCapacity)
         {
             OnInventoryFull?.Invoke();
+            return;
+        }
+
+        // Calculate how many items can actually be added based on available capacity
+        int remaining = quantity;
+        int availableCapacity = MaxCapacity - _currentCapacity;
+
+        // Limit quantity to available capacity to prevent overflow
+        remaining = Mathf.Min(remaining, availableCapacity);
+
+        // Handle stackable items by attempting to add to existing stacks
+        if (worldItem.IsStackable && _items.TryGetValue(worldItem.ItemID, out InventoryItem existingItem))
+        {
+            // Attempt to add items to existing stack
+            int leftover = existingItem.PushStack(remaining);
+            int actuallyAdded = remaining - leftover;
+            _currentCapacity += actuallyAdded;
+
+            // Handle case where not all items could be stacked due to stack limits
+            if (leftover > 0)
+                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+
+            OnItemAdded?.Invoke(existingItem);
+        }
+        else
+        {
+            // Create new inventory item entry for non-stackable items or new item types
+            InventoryItem newItem = new(worldItem, remaining);
+            _items[newItem.ID] = newItem;
+            _currentCapacity += newItem.StackCount;
+
+            if (newItem.StackCount < remaining)
+            {
+                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+            }
+
+            OnItemAdded?.Invoke(newItem);
+        }
+    }
+
+#if UNITY_EDITOR
+    public void AddItem(out int id, ItemConfigSO worldItem, int quantity = 1)
+    {
+        if (worldItem == null || quantity < 1) throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null."); ;
+
+        if (_currentCapacity >= MaxCapacity)
+        {
+            OnInventoryFull?.Invoke();
+            id = 0;
             return;
         }
 
@@ -58,12 +108,14 @@ public class Inventory
                 OnItemStackLimitReached?.Invoke(worldItem.ItemName);
 
             OnItemAdded?.Invoke(existingItem);
+
+            id = existingItem.ID;
         }
         else
         {
             // Create new inventory item entry for non-stackable items or new item types
-            var newItem = new InventoryItem(worldItem, remaining);
-            _items[worldItem.GetInstanceID()] = newItem;
+            InventoryItem newItem = new(worldItem, remaining);
+            _items[newItem.ID] = newItem;
             _currentCapacity += newItem.StackCount;
 
             if (newItem.StackCount < remaining)
@@ -72,8 +124,10 @@ public class Inventory
             }
 
             OnItemAdded?.Invoke(newItem);
+            id = newItem.ID;
         }
     }
+#endif
 
     /// <summary>
     /// Method to remove items from inventory by name and quantity
