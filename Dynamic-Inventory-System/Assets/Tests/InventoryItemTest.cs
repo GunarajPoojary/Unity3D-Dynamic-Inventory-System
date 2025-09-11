@@ -49,14 +49,6 @@ public class InventoryItemTest
         Assert.AreEqual(1, leftover);
     }
 
-    // [Test]
-    // public void PushStack_WithZeroOrNegativeAmount_DoesNothing()
-    // {
-    //     var item = new InventoryItem(_stackableItemConfig, 5);
-    //     int leftover = item.PushStack(0);
-    //     Assert.Throws<ArgumentException>("bg");
-    // }
-
     [Test]
     public void PopStack_RemovesFromStack()
     {
