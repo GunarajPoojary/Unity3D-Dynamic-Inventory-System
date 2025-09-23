@@ -1,9 +1,12 @@
+#if UNITY_EDITOR
+using UnityEditor;
+#endif
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewItem", menuName = "Inventory/Item")]
 public class ItemConfigSO : DescriptionBaseSO
 {
-    public int ItemID = 0; // Default is set 0, which means the ID is unassigned.
+    public int ID = 0; // Default is set 0, which means the ID is unassigned.
 
     [Header("Stacking Rules")]
     [Range(1, 99)][SerializeField] private int _maxStack = 1;
@@ -20,8 +23,9 @@ public class ItemConfigSO : DescriptionBaseSO
     /// <summary>
     /// Editor-only method to initialize item properties for testing.
     /// </summary>
-    public void Initialize(string itemName, int maxStack)
+    public void Initialize(int id,string itemName, int maxStack)
     {
+        ID = id;
         ItemName = itemName;
         _maxStack = maxStack;
     }

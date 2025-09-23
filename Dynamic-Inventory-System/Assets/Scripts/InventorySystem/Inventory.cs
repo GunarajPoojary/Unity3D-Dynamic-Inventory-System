@@ -23,6 +23,30 @@ public class Inventory
     public event Action<InventoryItem> OnItemAdded;
     #endregion
 
+    #region Validation Methods
+    /// <summary>
+    /// Validates the ItemConfigSO parameter to ensure it is not null
+    /// </summary>
+    /// <param name="worldItem">The item to validate</param>
+    /// <exception cref="ArgumentNullException">Thrown when worldItem is null</exception>
+    private void ValidateItemConfig(ItemConfigSO worldItem)
+    {
+        if (worldItem == null)
+            throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null.");
+    }
+
+    /// <summary>
+    /// Validates the quantity parameter to ensure it is greater than zero
+    /// </summary>
+    /// <param name="quantity">The quantity to validate</param>
+    /// <exception cref="ArgumentException">Thrown when quantity is less than 1</exception>
+    private void ValidateQuantity(int quantity)
+    {
+        if (quantity < 1)
+            throw new ArgumentException("Quantity cannot be less than 1.", nameof(quantity));
+    }
+    #endregion
+
     /// <summary>
     /// Adds an item to the inventory with specified quantity
     /// Handles capacity checking, stacking logic, and appropriate event notifications
@@ -31,7 +55,8 @@ public class Inventory
     /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(ItemConfigSO worldItem, int quantity = 1)
     {
-        if (worldItem == null || quantity < 1) throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null."); ;
+        ValidateItemConfig(worldItem);
+        ValidateQuantity(quantity);
 
         if (_currentCapacity >= MaxCapacity)
         {
@@ -47,39 +72,71 @@ public class Inventory
         remaining = Mathf.Min(remaining, availableCapacity);
 
         // Handle stackable items by attempting to add to existing stacks
-        if (worldItem.IsStackable && _items.TryGetValue(worldItem.ItemID, out InventoryItem existingItem))
+        if (worldItem.IsStackable)
         {
-            // Attempt to add items to existing stack
-            int leftover = existingItem.PushStack(remaining);
-            int actuallyAdded = remaining - leftover;
-            _currentCapacity += actuallyAdded;
-
-            // Handle case where not all items could be stacked due to stack limits
-            if (leftover > 0)
-                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
-
-            OnItemAdded?.Invoke(existingItem);
-        }
-        else
-        {
-            // Create new inventory item entry for non-stackable items or new item types
-            InventoryItem newItem = new(worldItem, remaining);
-            _items[newItem.ID] = newItem;
-            _currentCapacity += newItem.StackCount;
-
-            if (newItem.StackCount < remaining)
+            if (_items.TryGetValue(worldItem.ID, out InventoryItem existingItem))
             {
-                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+                // Attempt to add items to existing stack
+                int leftover = existingItem.PushStack(remaining);
+                int actuallyAdded = remaining - leftover;
+                _currentCapacity += actuallyAdded;
+
+                // Handle case where not all items could be stacked due to stack limits
+                if (leftover > 0)
+                    OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+
+                if (actuallyAdded > 0)
+                    OnItemAdded?.Invoke(existingItem);
+            }
+            else
+            {
+                InventoryItem newStackableItem = new(worldItem);
+                int leftover = newStackableItem.PushStack(remaining - 1);
+                int actuallyAdded = remaining - leftover;
+
+                _items[newStackableItem.ID] = newStackableItem;
+                _currentCapacity += actuallyAdded;
+
+                if (leftover > 0)
+                    OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+
+                if (actuallyAdded > 0)
+                    OnItemAdded?.Invoke(newStackableItem);
             }
 
-            OnItemAdded?.Invoke(newItem);
+            return;
         }
+
+        InventoryItem newNonStackableItem = null;
+
+        for (int i = 0; i < remaining; i++)
+        {
+            if (_currentCapacity >= MaxCapacity)
+            {
+                OnInventoryFull?.Invoke();
+                break;
+            }
+
+            newNonStackableItem = new(worldItem);
+            _items[newNonStackableItem.ID] = newNonStackableItem;
+            _currentCapacity++;
+        }
+
+        if (newNonStackableItem != null)
+            OnItemAdded?.Invoke(newNonStackableItem);
     }
 
 #if UNITY_EDITOR
+    /// <summary>
+    /// Editor-only version of AddItem that returns the ID of the added item
+    /// </summary>
+    /// <param name="id">Output parameter containing the ID of the added item</param>
+    /// <param name="worldItem">The item scriptable object to add to the inventory</param>
+    /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(out int id, ItemConfigSO worldItem, int quantity = 1)
     {
-        if (worldItem == null || quantity < 1) throw new ArgumentNullException(nameof(worldItem), "ItemConfigSO cannot be null."); ;
+        ValidateItemConfig(worldItem);
+        ValidateQuantity(quantity);
 
         if (_currentCapacity >= MaxCapacity)
         {
@@ -96,50 +153,73 @@ public class Inventory
         remaining = Mathf.Min(remaining, availableCapacity);
 
         // Handle stackable items by attempting to add to existing stacks
-        if (worldItem.IsStackable && _items.TryGetValue(worldItem.GetInstanceID(), out InventoryItem existingItem))
+        if (worldItem.IsStackable)
         {
-            // Attempt to add items to existing stack
-            int leftover = existingItem.PushStack(remaining);
-            int actuallyAdded = remaining - leftover;
-            _currentCapacity += actuallyAdded;
-
-            // Handle case where not all items could be stacked due to stack limits
-            if (leftover > 0)
-                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
-
-            OnItemAdded?.Invoke(existingItem);
-
-            id = existingItem.ID;
-        }
-        else
-        {
-            // Create new inventory item entry for non-stackable items or new item types
-            InventoryItem newItem = new(worldItem, remaining);
-            _items[newItem.ID] = newItem;
-            _currentCapacity += newItem.StackCount;
-
-            if (newItem.StackCount < remaining)
+            if (_items.TryGetValue(worldItem.ID, out InventoryItem existingItem))
             {
-                OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+                // Attempt to add items to existing stack
+                int leftover = existingItem.PushStack(remaining);
+                int actuallyAdded = remaining - leftover;
+                _currentCapacity += actuallyAdded;
+
+                // Handle case where not all items could be stacked due to stack limits
+                if (leftover > 0)
+                    OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+
+                if (actuallyAdded > 0)
+                {
+                    OnItemAdded?.Invoke(existingItem);
+                    id = existingItem.ID;
+                    return;
+                }
+            }
+            else
+            {
+                InventoryItem newStackableItem = new(worldItem);
+                int leftover = newStackableItem.PushStack(remaining - 1);
+                int actuallyAdded = remaining - leftover;
+
+                _items[newStackableItem.ID] = newStackableItem;
+                _currentCapacity += actuallyAdded;
+
+                if (leftover > 0)
+                    OnItemStackLimitReached?.Invoke(worldItem.ItemName);
+
+                if (actuallyAdded > 0)
+                {
+                    OnItemAdded?.Invoke(newStackableItem);
+                    id = newStackableItem.ID;
+                    return;
+                }
             }
 
-            OnItemAdded?.Invoke(newItem);
-            id = newItem.ID;
+            id = 0;
+            return;
         }
+
+        InventoryItem newNonStackableItem = null;
+
+        for (int i = 0; i < remaining; i++)
+        {
+            if (_currentCapacity >= MaxCapacity)
+            {
+                OnInventoryFull?.Invoke();
+                break;
+            }
+
+            newNonStackableItem = new(worldItem);
+            _items[newNonStackableItem.ID] = newNonStackableItem;
+            _currentCapacity++;
+        }
+
+        if (newNonStackableItem != null)
+        {
+            OnItemAdded?.Invoke(newNonStackableItem);
+            id = newNonStackableItem.ID;
+            return;
+        }
+
+        id = 0;
     }
 #endif
-
-    /// <summary>
-    /// Method to remove items from inventory by name and quantity
-    /// Currently returns false as implementation is pending
-    /// </summary>
-    /// <param name="itemName">Name of the item to remove from inventory</param>
-    /// <param name="quantity">Number of items to remove (default: 1)</param>
-    /// <returns>True if items were successfully removed, false otherwise</returns>
-    public bool RemoveItem(string itemName, int quantity = 1)
-    {
-        // TODO: Implement item removal logic
-        // Should handle quantity validation, item existence checking, and capacity updates
-        return false;
-    }
 }

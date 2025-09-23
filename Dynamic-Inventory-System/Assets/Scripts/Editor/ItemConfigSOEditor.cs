@@ -21,7 +21,7 @@ public class ItemConfigSOEditor : Editor
 
             if (item != null && !string.IsNullOrEmpty(item.name))
             {
-                item.ItemID = i + 1;
+                item.ID = -(i + 1);
                 EditorUtility.SetDirty(item);
             }
         }

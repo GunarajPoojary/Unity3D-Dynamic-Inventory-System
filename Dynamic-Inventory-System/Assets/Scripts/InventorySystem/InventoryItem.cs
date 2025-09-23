@@ -7,8 +7,10 @@ using System;
 [Serializable]
 public class InventoryItem
 {
-    private static int _nextID = 0;
-    public int ID { get; }
+    private static int _nextID = 1;
+    private readonly int _id = 0;
+    public int ID => _id;
+
     private ItemConfigSO _item;
     private int _stackCount = 1;
 
@@ -16,31 +18,25 @@ public class InventoryItem
     public int StackCount => _stackCount;
     public int RemainingStackSize => _item.MaxStack - _stackCount;
 
-    public InventoryItem(ItemConfigSO item, int stackCount = 1)
+    // Constants for error messages
+    private const string ItemNullErrorMessage = "ItemConfigSO cannot be null.";
+    private const string InvalidAmountErrorMessage = "Amount must be greater than zero.";
+
+    public InventoryItem(ItemConfigSO item)
     {
-        if (item == null || stackCount < 1) throw new ArgumentNullException(
-            nameof(item),
-            "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
-
-        ID = ++_nextID;
-
+        ValidateItemNotNull(item);
         _item = item;
-
-        _stackCount = stackCount;
+        _id = _item.IsStackable ? _item.ID : ++_nextID;
     }
 
     /// <summary>
-    /// Method to Reset the Inventory Item to orignal state(Ex: Used for pool)
+    /// Method to Reset the Inventory Item to original state (Ex: Used for pool)
     /// </summary>
     /// <param name="item"></param>
-    /// <param name="stackCount"></param>
-    public void ResetItem(ItemConfigSO item, int stackCount = 1)
+    public void ResetItem(ItemConfigSO item)
     {
-        if (item == null || stackCount < 1) throw new ArgumentNullException(nameof(item),
-                                                                                    "ItemConfigSO cannot be null and stackCount cannot be less than 1.");
+        ValidateItemNotNull(item);
         _item = item;
-
-        _stackCount = stackCount;
     }
 
     /// <summary>
@@ -50,22 +46,42 @@ public class InventoryItem
     /// <param name="amount"></param>
     public int PushStack(int amount)
     {
-        if (amount <= 0) return 0;
+        ValidateAmount(amount);
         int toAdd = Mathf.Min(amount, RemainingStackSize);
         _stackCount += toAdd;
         return amount - toAdd;
     }
 
     /// <summary>
-    /// // Method to remove items from the stack
+    /// Method to remove items from the stack
     /// </summary>
     /// <param name="amount"></param>
     public bool PopStack(int amount)
     {
-        if (amount < 1) throw new ArgumentNullException(nameof(amount), "amount cannot be less than 1.");
+        ValidateAmount(amount);
+        _stackCount = Mathf.Max(0, _stackCount - amount);
+        return _stackCount <= 0;
+    }
 
-        _stackCount = Mathf.Max(0, _stackCount - amount); // Subtract the amount while preventing negative stack counts
+    /// <summary>
+    /// Validates that the ItemConfigSO is not null
+    /// </summary>
+    /// <param name="item">The item to validate</param>
+    /// <exception cref="ArgumentNullException">Thrown when item is null</exception>
+    private static void ValidateItemNotNull(ItemConfigSO item)
+    {
+        if (item == null) 
+            throw new ArgumentNullException(nameof(item), ItemNullErrorMessage);
+    }
 
-        return _stackCount < 0;
+    /// <summary>
+    /// Validates that the amount is greater than zero
+    /// </summary>
+    /// <param name="amount">The amount to validate</param>
+    /// <exception cref="ArgumentOutOfRangeException">Thrown when amount is less than or equal to zero</exception>
+    private static void ValidateAmount(int amount)
+    {
+        if (amount <= 0) 
+            throw new ArgumentOutOfRangeException(nameof(amount), InvalidAmountErrorMessage);
     }
 }

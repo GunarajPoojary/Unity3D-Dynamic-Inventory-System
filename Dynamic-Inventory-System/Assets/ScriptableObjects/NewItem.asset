@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: NewItem
   m_EditorClassIdentifier: 
   Description: 
-  ItemID: 2
+  ID: -2
   _maxStack: 1
   <ItemName>k__BackingField: 
   <ItemDescription>k__BackingField: 
