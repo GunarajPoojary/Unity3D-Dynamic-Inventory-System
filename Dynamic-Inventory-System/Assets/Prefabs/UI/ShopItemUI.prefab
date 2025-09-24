@@ -150,7 +150,7 @@ GameObject:
   - component: {fileID: 2316842638475073848}
   - component: {fileID: -7380310546145791097}
   m_Layer: 0
-  m_Name: WorldItem
+  m_Name: ShopItemUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -175,7 +175,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 0, y: 0}
-  m_SizeDelta: {x: 100, y: 100}
+  m_SizeDelta: {x: 200, y: 250}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8610612266370660819
 CanvasRenderer:
@@ -271,12 +271,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: aa58f5d7e55286a4e83b4a707e94881a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _itemConfigSO: {fileID: 0}
   _itemImage: {fileID: 6230162118702051073}
   _itemName: {fileID: 3145752821979627071}
   _button: {fileID: 2316842638475073848}
   _itemConfigSOEventChannelSO: {fileID: 11400000, guid: d29b4a478a6a2134bb47cf645e1b4d6d, type: 2}
-  _quantity: 1
 --- !u!1 &7035662078324022081
 GameObject:
   m_ObjectHideFlags: 0
