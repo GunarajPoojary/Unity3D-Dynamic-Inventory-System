@@ -674,6 +674,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: ShopMenu
       objectReference: {fileID: 0}
+    - target: {fileID: 341566677751119439, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4449760122319410924, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_Spacing.x
       value: 30
@@ -696,11 +700,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4449760122319410924, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_Padding.m_Top
-      value: 0
+      value: 60
       objectReference: {fileID: 0}
     - target: {fileID: 4449760122319410924, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_ChildAlignment
-      value: 4
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 4449760122319410924, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_Padding.m_Left
@@ -795,12 +799,24 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7522837763315129150, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: m_Pivot.y
+      value: 0.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 7522837763315129150, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0.85
+      objectReference: {fileID: 0}
+    - target: {fileID: 7522837763315129150, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: m_AnchorMin.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7522837763315129150, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_SizeDelta.y
-      value: -162
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7522837763315129150, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: -81
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8053109740936863051, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: _poolSize
