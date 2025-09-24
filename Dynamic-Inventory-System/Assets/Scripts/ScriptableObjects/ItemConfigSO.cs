@@ -1,15 +1,15 @@
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "NewItem", menuName = "Inventory/Item")]
 public class ItemConfigSO : DescriptionBaseSO
 {
-    public int ID = 0; // Default is set 0, which means the ID is unassigned.
+    [Tooltip("Default is set 0, which means the ID is unassigned.")]
+    [SerializeField] private int _id = 0; 
+    public int ID => _id;
 
     [Header("Stacking Rules")]
-    [Range(1, 99)][SerializeField] private int _maxStack = 1;
+    [Tooltip("Default is set 1, which means Non-Stackable")]
+    [Range(1, 9)][SerializeField] private int _maxStack = 1;
 
     [Header("General Info")]
     [field: SerializeField] public string ItemName { get; private set; }
@@ -23,9 +23,9 @@ public class ItemConfigSO : DescriptionBaseSO
     /// <summary>
     /// Editor-only method to initialize item properties for testing.
     /// </summary>
-    public void Initialize(int id,string itemName, int maxStack)
+    public void Initialize(int id, string itemName, int maxStack)
     {
-        ID = id;
+        _id = id;
         ItemName = itemName;
         _maxStack = maxStack;
     }

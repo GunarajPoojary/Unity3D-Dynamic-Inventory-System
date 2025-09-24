@@ -18,7 +18,6 @@ public class InventoryItem
     public int StackCount => _stackCount;
     public int RemainingStackSize => _item.MaxStack - _stackCount;
 
-    // Constants for error messages
     private const string ItemNullErrorMessage = "ItemConfigSO cannot be null.";
     private const string InvalidAmountErrorMessage = "Amount must be greater than zero.";
 
@@ -37,6 +36,7 @@ public class InventoryItem
     {
         ValidateItemNotNull(item);
         _item = item;
+        _stackCount = 1;
     }
 
     /// <summary>
@@ -68,7 +68,7 @@ public class InventoryItem
     /// </summary>
     /// <param name="item">The item to validate</param>
     /// <exception cref="ArgumentNullException">Thrown when item is null</exception>
-    private static void ValidateItemNotNull(ItemConfigSO item)
+    private void ValidateItemNotNull(ItemConfigSO item)
     {
         if (item == null) 
             throw new ArgumentNullException(nameof(item), ItemNullErrorMessage);
@@ -79,7 +79,7 @@ public class InventoryItem
     /// </summary>
     /// <param name="amount">The amount to validate</param>
     /// <exception cref="ArgumentOutOfRangeException">Thrown when amount is less than or equal to zero</exception>
-    private static void ValidateAmount(int amount)
+    private void ValidateAmount(int amount)
     {
         if (amount <= 0) 
             throw new ArgumentOutOfRangeException(nameof(amount), InvalidAmountErrorMessage);
