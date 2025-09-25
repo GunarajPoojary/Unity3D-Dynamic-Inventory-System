@@ -17,38 +17,16 @@ public class Inventory
 
     private int _currentCapacity = 0;
 
-    private const string ItemNullErrorMessage = "ItemConfigSO cannot be null.";
-    private const string InvalidQuantityErrorMessage = "Quantity must be greater than zero.";
+    private readonly Action _onInventoryFull;
+    private readonly Action<string> _onItemStackLimitReached;
+    private readonly Action<InventoryItem> _onItemAdded;
 
-    #region Events
-    public event Action OnInventoryFull;
-    public event Action<string> OnItemStackLimitReached;
-    public event Action<InventoryItem> OnItemAdded;
-    #endregion
-
-    #region Validation Methods
-    /// <summary>
-    /// Validates the ItemConfigSO parameter to ensure it is not null
-    /// </summary>
-    /// <param name="worldItem">The item to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown when worldItem is null</exception>
-    private void ValidateItemConfig(ItemConfigSO worldItem)
+    public Inventory(Action onInventoryFull, Action<string> onItemStackLimitReached, Action<InventoryItem> onItemAdded)
     {
-        if (worldItem == null)
-            throw new ArgumentNullException(nameof(worldItem), ItemNullErrorMessage);
+        _onInventoryFull = onInventoryFull;
+        _onItemStackLimitReached = onItemStackLimitReached;
+        _onItemAdded = onItemAdded;
     }
-
-    /// <summary>
-    /// Validates the quantity parameter to ensure it is greater than zero
-    /// </summary>
-    /// <param name="quantity">The quantity to validate</param>
-    /// <exception cref="ArgumentException">Thrown when quantity is less than 1</exception>
-    private void ValidateQuantity(int quantity)
-    {
-        if (quantity < 1)
-            throw new ArgumentException(InvalidQuantityErrorMessage, nameof(quantity));
-    }
-    #endregion
 
     /// <summary>
     /// Adds an item to the inventory with specified quantity
@@ -58,12 +36,12 @@ public class Inventory
     /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(ItemConfigSO worldItemConfig, int quantity = 1)
     {
-        ValidateItemConfig(worldItemConfig);
-        ValidateQuantity(quantity);
+        InventoryUtility.ValidateItemConfig(worldItemConfig);
+        InventoryUtility.ValidateQuantity(quantity);
 
         if (_currentCapacity >= MaxCapacity)
         {
-            OnInventoryFull?.Invoke();
+            _onInventoryFull?.Invoke();
             return;
         }
 
@@ -86,10 +64,10 @@ public class Inventory
 
                 // Handle case where not all items could be stacked due to stack limits
                 if (leftover > 0)
-                    OnItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
+                    _onItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
 
                 if (actuallyAdded > 0)
-                    OnItemAdded?.Invoke(existingItem);
+                    _onItemAdded?.Invoke(existingItem);
             }
             else
             {
@@ -101,10 +79,10 @@ public class Inventory
                 _currentCapacity += actuallyAdded;
 
                 if (leftover > 0)
-                    OnItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
+                    _onItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
 
                 if (actuallyAdded > 0)
-                    OnItemAdded?.Invoke(newStackableItem);
+                    _onItemAdded?.Invoke(newStackableItem);
             }
 
             return;
@@ -116,7 +94,7 @@ public class Inventory
         {
             if (_currentCapacity >= MaxCapacity)
             {
-                OnInventoryFull?.Invoke();
+                _onInventoryFull?.Invoke();
                 break;
             }
 
@@ -126,7 +104,7 @@ public class Inventory
         }
 
         if (newNonStackableItem != null)
-            OnItemAdded?.Invoke(newNonStackableItem);
+            _onItemAdded?.Invoke(newNonStackableItem);
     }
 
     #region Unit Test Method
@@ -139,12 +117,12 @@ public class Inventory
     /// <param name="quantity">Number of items to add (default: 1)</param>
     public void AddItem(out int id, ItemConfigSO worldItemConfig, int quantity = 1)
     {
-        ValidateItemConfig(worldItemConfig);
-        ValidateQuantity(quantity);
+        InventoryUtility.ValidateItemConfig(worldItemConfig);
+        InventoryUtility.ValidateQuantity(quantity);
 
         if (_currentCapacity >= MaxCapacity)
         {
-            OnInventoryFull?.Invoke();
+            _onInventoryFull?.Invoke();
             id = 0;
             return;
         }
@@ -168,11 +146,11 @@ public class Inventory
 
                 // Handle case where not all items could be stacked due to stack limits
                 if (leftover > 0)
-                    OnItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
+                    _onItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
 
                 if (actuallyAdded > 0)
                 {
-                    OnItemAdded?.Invoke(existingItem);
+                    _onItemAdded?.Invoke(existingItem);
                     id = existingItem.ID;
                     return;
                 }
@@ -187,11 +165,11 @@ public class Inventory
                 _currentCapacity += actuallyAdded;
 
                 if (leftover > 0)
-                    OnItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
+                    _onItemStackLimitReached?.Invoke(worldItemConfig.ItemName);
 
                 if (actuallyAdded > 0)
                 {
-                    OnItemAdded?.Invoke(newStackableItem);
+                    _onItemAdded?.Invoke(newStackableItem);
                     id = newStackableItem.ID;
                     return;
                 }
@@ -207,7 +185,7 @@ public class Inventory
         {
             if (_currentCapacity >= MaxCapacity)
             {
-                OnInventoryFull?.Invoke();
+                _onInventoryFull?.Invoke();
                 break;
             }
 
@@ -218,7 +196,7 @@ public class Inventory
 
         if (newNonStackableItem != null)
         {
-            OnItemAdded?.Invoke(newNonStackableItem);
+            _onItemAdded?.Invoke(newNonStackableItem);
             id = newNonStackableItem.ID;
             return;
         }
@@ -227,4 +205,8 @@ public class Inventory
     }
 #endif
     #endregion
+}
+public class AddItemOperationHandle
+{
+    public bool Success { get; private set; }
 }

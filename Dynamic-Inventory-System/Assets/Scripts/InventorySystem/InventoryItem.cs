@@ -18,12 +18,9 @@ public class InventoryItem
     public int StackCount => _stackCount;
     public int RemainingStackSize => _item.MaxStack - _stackCount;
 
-    private const string ItemNullErrorMessage = "ItemConfigSO cannot be null.";
-    private const string InvalidAmountErrorMessage = "Amount must be greater than zero.";
-
     public InventoryItem(ItemConfigSO item)
     {
-        ValidateItemNotNull(item);
+        InventoryUtility.ValidateItemConfig(item);
         _item = item;
         _id = _item.IsStackable ? _item.ID : ++_nextID;
     }
@@ -34,7 +31,7 @@ public class InventoryItem
     /// <param name="item"></param>
     public void ResetItem(ItemConfigSO item)
     {
-        ValidateItemNotNull(item);
+        InventoryUtility.ValidateItemConfig(item);
         _item = item;
         _stackCount = 1;
     }
@@ -46,7 +43,7 @@ public class InventoryItem
     /// <param name="amount"></param>
     public int PushStack(int amount)
     {
-        ValidateAmount(amount);
+        InventoryUtility.ValidateQuantity(amount);
         int toAdd = Mathf.Min(amount, RemainingStackSize);
         _stackCount += toAdd;
         return amount - toAdd;
@@ -58,30 +55,8 @@ public class InventoryItem
     /// <param name="amount"></param>
     public bool PopStack(int amount)
     {
-        ValidateAmount(amount);
+        InventoryUtility.ValidateQuantity(amount);
         _stackCount = Mathf.Max(0, _stackCount - amount);
         return _stackCount <= 0;
-    }
-
-    /// <summary>
-    /// Validates that the ItemConfigSO is not null
-    /// </summary>
-    /// <param name="item">The item to validate</param>
-    /// <exception cref="ArgumentNullException">Thrown when item is null</exception>
-    private void ValidateItemNotNull(ItemConfigSO item)
-    {
-        if (item == null) 
-            throw new ArgumentNullException(nameof(item), ItemNullErrorMessage);
-    }
-
-    /// <summary>
-    /// Validates that the amount is greater than zero
-    /// </summary>
-    /// <param name="amount">The amount to validate</param>
-    /// <exception cref="ArgumentOutOfRangeException">Thrown when amount is less than or equal to zero</exception>
-    private void ValidateAmount(int amount)
-    {
-        if (amount <= 0) 
-            throw new ArgumentOutOfRangeException(nameof(amount), InvalidAmountErrorMessage);
     }
 }
