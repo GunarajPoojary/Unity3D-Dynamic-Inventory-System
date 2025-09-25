@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c7394e313f94dfe4289fce5ed585a174, type: 3}
-  m_Name: Spike
+  m_Name: Potion
   m_EditorClassIdentifier: 
   Description: 
-  _id: -5
-  _maxStack: 1
-  <ItemName>k__BackingField: Spike
+  _id: -3
+  _maxStack: 2
+  <ItemName>k__BackingField: Potion
   <ItemDescription>k__BackingField: 
   <Icon>k__BackingField: {fileID: 0}

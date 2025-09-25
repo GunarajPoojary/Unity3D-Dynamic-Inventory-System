@@ -3739,6 +3739,14 @@ PrefabInstance:
       propertyPath: _container
       value: 
       objectReference: {fileID: 2771240465657325771}
+    - target: {fileID: 8053109740936863051, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: _availableItems.Array.size
+      value: 5
+      objectReference: {fileID: 0}
+    - target: {fileID: 8053109740936863051, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
+      propertyPath: '_availableItems.Array.data[4]'
+      value: 
+      objectReference: {fileID: 11400000, guid: fd0eb50cfc7defd45b26ffe3eaf8110b, type: 2}
     - target: {fileID: 9017413317374523748, guid: bbcf6fa23fa95b54a9bbdf583e59b47a, type: 3}
       propertyPath: m_AnchorMax.y
       value: 1

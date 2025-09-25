@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shield
   m_EditorClassIdentifier: 
   Description: 
-  _id: -3
+  _id: -4
   _maxStack: 1
   <ItemName>k__BackingField: Shield
   <ItemDescription>k__BackingField: 
