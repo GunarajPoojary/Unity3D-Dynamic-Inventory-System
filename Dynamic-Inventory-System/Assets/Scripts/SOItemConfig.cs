@@ -11,7 +11,7 @@ public enum ItemType
 [CreateAssetMenu(fileName = "New Item", menuName = "Inventory/Item Configuration")]
 public class SOItemConfig : ScriptableObject
 {
-    [field: SerializeField] public string ItemID { get; private set; }
+    public string ItemID { get; set; }
     [field: SerializeField] public string DisplayName { get; private set; }
     [TextArea][field: SerializeField] public string Description { get; private set; }
     [field: SerializeField] public ItemType Type { get; private set; }

@@ -2346,9 +2346,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _inventory: {fileID: 334569694}
   _item: {fileID: 11400000, guid: 0bfcbf7f3d8bad248b63616d4e8aba7f, type: 2}
-  _amount: 5
+  _amount: 4
   _removeIndex: 0
-  _removeItemType: 0
+  _removeItemType: 2
 --- !u!114 &334569694
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2361,10 +2361,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 62890f7b1041ee3439a750c206e48d07, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _weaponCapacity: 1
-  _armorsCapacity: 40
-  _consumableCapacity: 2
-  _miscsCapacity: 40
+  _weaponCapacity: 5
+  _armorsCapacity: 5
+  _consumableCapacity: 7
+  _miscsCapacity: 5
 --- !u!1 &339363188
 GameObject:
   m_ObjectHideFlags: 0
@@ -5883,7 +5883,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   inventory: {fileID: 0}
   slotPrefab: {fileID: 0}
-  tooltip: {fileID: 0}
   weaponsContainer: {fileID: 0}
   armorsContainer: {fileID: 0}
   consumablesContainer: {fileID: 0}
