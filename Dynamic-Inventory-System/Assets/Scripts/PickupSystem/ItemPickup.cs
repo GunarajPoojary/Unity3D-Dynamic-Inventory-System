@@ -9,6 +9,6 @@ public class ItemPickup : MonoBehaviour
     [ContextMenu("Add Item To Inventory")]
     private void AddItemToInventory()
     {
-        Inventory.Instance.AddItem(_itemConfig);
+        InventoryManager.Instance.AddItem(_itemConfig);
     }
 }

@@ -1,30 +1,69 @@
+using System;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
-public class Inventory : MonoBehaviour
+public struct AddItemResult
 {
-    public static Inventory Instance { get; private set; }
+    public bool Success;   // True if at least some items were added
+    public int Added;      // How many items were added
+    public int Leftover;   // Items that couldn't be added
+}
 
-    [Header("Capacity")]
-    [SerializeField] private int _weaponCapacity = 40;
-    [SerializeField] private int _armorsCapacity = 40;
-    [SerializeField] private int _consumableCapacity = 40;
-    [SerializeField] private int _miscsCapacity = 40;
+public class Inventory
+{
+    private readonly List<InventoryItem> _weapons;
+    private readonly List<InventoryItem> _armors;
+    private readonly List<InventoryItem> _consumables;
+    private readonly List<InventoryItem> _miscs;
 
-    private List<InventoryItem> _weapons;
-    private List<InventoryItem> _armors;
-    private List<InventoryItem> _consumables;
-    private List<InventoryItem> _miscs;
+    public event Action<int, InventoryItem> OnItemUpdated;
 
-    private int _weaponCount;
-    private int _consumablesCount;
-
-    private void Awake()
+    public Inventory(int weaponCapacity, int armorsCapacity, int consumableCapacity, int miscsCapacity)
     {
-        Instance = this;
+        _weapons = InitItems(weaponCapacity);
+        _armors = InitItems(armorsCapacity);
+        _consumables = InitItems(consumableCapacity);
+        _miscs = InitItems(miscsCapacity);
+    }
 
-        Init();
+    public AddItemResult AddItem(SOItemConfig config, int amount = 1)
+    {
+        if (config == null)
+        {
+            Debug.LogError("Trying to add NULL item to inventory.");
+            return new AddItemResult { Success = false, Added = 0, Leftover = amount };
+        }
+
+        return config.Type switch
+        {
+            ItemType.Weapon => AddNonStackableItem(_weapons, config, amount),
+            ItemType.Armor => AddNonStackableItem(_armors, config, amount),
+            ItemType.Consumable => AddStackableItem(_consumables, config, amount),
+            ItemType.Misc => AddNonStackableItem(_miscs, config, amount),
+            _ => new AddItemResult { Success = false, Added = 0, Leftover = amount }
+        };
+    }
+
+    public void RemoveItem(int slotIndex, ItemType type, int amount = 1)
+    {
+        switch (type)
+        {
+            case ItemType.Weapon:
+                RemoveNonStackableItem(_weapons, slotIndex);
+                break;
+
+            case ItemType.Armor:
+                RemoveNonStackableItem(_armors, slotIndex);
+                break;
+
+            case ItemType.Consumable:
+                RemoveStackableItem(_consumables, slotIndex, amount);
+                break;
+
+            case ItemType.Misc:
+                RemoveNonStackableItem(_miscs, slotIndex);
+                break;
+        }
     }
 
     private List<InventoryItem> InitItems(int maxCapacity)
@@ -32,97 +71,101 @@ public class Inventory : MonoBehaviour
         List<InventoryItem> items = new List<InventoryItem>(maxCapacity);
 
         for (int i = 0; i < maxCapacity; i++)
-            items.Add(new InventoryItem());
+            items.Add(new InventoryItem(i, null));
 
         return items;
     }
 
-    private void Init()
+    private AddItemResult AddNonStackableItem(List<InventoryItem> items, SOItemConfig config, int amount)
     {
-        _weapons = InitItems(_weaponCapacity);
-        _armors = InitItems(_armorsCapacity);
-        _consumables = InitItems(_consumableCapacity);
-        _miscs = InitItems(_miscsCapacity);
-    }
+        int added = 0;
 
-    public void AddItem(SOItemConfig config, int amount = 1)
-    {
-        if (config == null)
-        {
-            Debug.LogError("Trying to add NULL item to inventory.");
-            return;
-        }
-
-        switch (config.Type)
-        {
-            case ItemType.Weapon:
-                AddNonStackableItem(_weapons, config, amount);
-                break;
-
-            case ItemType.Armor:
-                AddNonStackableItem(_armors, config, amount);
-                break;
-
-            case ItemType.Consumable:
-                AddConsumable(config, amount);
-                break;
-
-            case ItemType.Misc:
-                AddNonStackableItem(_miscs, config, amount);
-                break;
-        }
-    }
-
-    private void AddNonStackableItem(List<InventoryItem> items, SOItemConfig config, int amount)
-    {
         while (amount > 0)
         {
             int emptySlot = GetFirstEmptySlot(items);
             if (emptySlot == -1)
             {
-                Debug.Log("Inventory is full!");
-                return;
+                return new AddItemResult
+                {
+                    Success = added > 0,
+                    Added = added,
+                    Leftover = amount
+                };
             }
 
             items[emptySlot].Set(config);
+            OnItemUpdated?.Invoke(emptySlot, items[emptySlot]);
+
+            added++;
             amount--;
         }
+
+        return new AddItemResult
+        {
+            Success = true,
+            Added = added,
+            Leftover = 0
+        };
     }
 
-    private void AddConsumable(SOItemConfig config, int amount)
+    private AddItemResult AddStackableItem(List<InventoryItem> items, SOItemConfig config, int amount)
     {
-        if (config == null || amount <= 0)
-            return;
+        int originalAmount = amount;
+        bool existingStackFound = false;
 
-        // 1) Try to find an existing stack of this item
-        for (int i = 0; i < _consumables.Count; i++)
+        // Try to fill existing stacks first
+        for (int i = 0; i < items.Count && amount > 0; i++)
         {
-            InventoryItem slot = _consumables[i];
-
-            if (!slot.IsEmpty && slot.ItemConfig == config)
+            var item = items[i];
+            if (!item.IsEmpty && item.ItemConfig == config)
             {
-                // Add ONLY until stack is full, ignore leftover
-                slot.AddQuantity(amount);
-                return;
+                existingStackFound = true;
+
+                int leftover = item.AddQuantity(amount);
+                OnItemUpdated?.Invoke(i, item);
+                amount = leftover;  // leftover > 0 means stack was full
             }
         }
 
-        // 2) No existing stack found → place it in the first empty slot (if any)
-        int emptySlot = GetFirstEmptySlot(_consumables);
-
-        if (emptySlot == -1)
+        // If we found existing stacks and they became full, do NOT create a new stack
+        if (existingStackFound && amount > 0)
         {
-            Debug.Log("No space for consumables!");
-            return;
+            return new AddItemResult
+            {
+                Success = originalAmount != amount, // true if partially added
+                Added = originalAmount - amount,
+                Leftover = amount
+            };
         }
 
-        // Clamp amount to the maximum stack allowed
-        int placeAmount = Mathf.Min(amount, config.MaxStack);
+        // No existing stack found → create new one if space available
+        if (!existingStackFound)
+        {
+            int emptySlot = GetFirstEmptySlot(items);
+            if (emptySlot == -1)
+            {
+                return new AddItemResult
+                {
+                    Success = false,
+                    Added = 0,
+                    Leftover = amount
+                };
+            }
 
-        _consumables[emptySlot].Set(config, placeAmount);
+            int placeAmount = Mathf.Min(amount, config.MaxStack);
+            items[emptySlot].Set(config, placeAmount);
+            OnItemUpdated?.Invoke(emptySlot, items[emptySlot]);
+        }
+
+        return new AddItemResult
+        {
+            Success = true,
+            Added = originalAmount,
+            Leftover = 0
+        };
     }
 
-    public int GetFirstEmptySlot(List<InventoryItem> items)
+    private int GetFirstEmptySlot(List<InventoryItem> items)
     {
         for (int i = 0; i < items.Count; i++)
         {
@@ -132,29 +175,7 @@ public class Inventory : MonoBehaviour
         return -1;
     }
 
-    public void RemoveItem(int slotIndex, ItemType type, int amount = 1)
-    {
-        switch (type)
-        {
-            case ItemType.Weapon:
-                RemoveNonStackable(_weapons, slotIndex);
-                break;
-
-            case ItemType.Armor:
-                RemoveNonStackable(_armors, slotIndex);
-                break;
-
-            case ItemType.Consumable:
-                RemoveConsumable(slotIndex, amount);
-                break;
-
-            case ItemType.Misc:
-                RemoveNonStackable(_miscs, slotIndex);
-                break;
-        }
-    }
-
-    private void RemoveNonStackable(List<InventoryItem> items, int slotIndex)
+    private void RemoveNonStackableItem(List<InventoryItem> items, int slotIndex)
     {
         if (slotIndex < 0 || slotIndex >= items.Count || items[slotIndex] == null)
             return;
@@ -162,53 +183,14 @@ public class Inventory : MonoBehaviour
         items[slotIndex].Reset();
     }
 
-    private void RemoveConsumable(int slotIndex, int amount)
+    private void RemoveStackableItem(List<InventoryItem> items, int slotIndex, int amount)
     {
-        if (slotIndex < 0 || slotIndex >= _consumables.Count || _consumables[slotIndex] == null)
+        if (slotIndex < 0 || slotIndex >= items.Count || items[slotIndex] == null)
             return;
 
-        _consumables[slotIndex].RemoveQuantity(amount);
+        items[slotIndex].RemoveQuantity(amount);
 
-        if (_consumables[slotIndex].Quantity <= 0)
-        {
-            _consumables[slotIndex].Reset();
-        }
-    }
-
-    [ContextMenu("Print Items")]
-    private void PrintItems()
-    {
-        Debug.Log("=== INVENTORY CONTENTS ===");
-
-        PrintCategory("Weapons", _weapons);
-        PrintCategory("Armors", _armors);
-        PrintCategory("Consumables", _consumables, true);
-        PrintCategory("Misc", _miscs);
-
-        Debug.Log("=== END OF INVENTORY ===");
-    }
-
-    private void PrintCategory(string title, List<InventoryItem> items, bool showQuantity = false)
-    {
-        Debug.Log($"-- {title} --");
-
-        for (int i = 0; i < items.Count; i++)
-        {
-            InventoryItem item = items[i];
-
-            if (item == null || item.IsEmpty)
-            {
-                Debug.Log($"[{i}] (Empty)");
-            }
-            else
-            {
-                string name = item.ItemConfig.DisplayName;
-
-                if (showQuantity)
-                    Debug.Log($"[{i}] {name} x{item.Quantity}");
-                else
-                    Debug.Log($"[{i}] {name}");
-            }
-        }
+        if (items[slotIndex].Quantity <= 0)
+            items[slotIndex].Reset();
     }
 }

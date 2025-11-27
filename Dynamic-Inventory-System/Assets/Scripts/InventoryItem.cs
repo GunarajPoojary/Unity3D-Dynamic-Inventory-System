@@ -1,30 +1,30 @@
 [System.Serializable]
 public class InventoryItem
 {
+    private readonly int _id;
     private SOItemConfig _itemConfig;
     private ItemStack _itemStack;
 
-    public int Quantity => _itemStack.CurrentStackSize;
+    public int IndexID => _id;
+    public int Quantity => _itemStack == null ? 0 : _itemStack.CurrentStackSize;
     public bool IsEmpty => _itemConfig == null;
     public int SpaceLeft => _itemStack.RemainingStackSize;
     public bool IsFull => _itemStack.IsFull;
     public SOItemConfig ItemConfig => _itemConfig;
 
-    public InventoryItem()
-    {
-        _itemConfig = null;
-        _itemStack = null;
-    }
+    public ItemType ItemType => _itemConfig.Type;
 
-    public InventoryItem(SOItemConfig itemConfig, int quantity = 1)
+    public InventoryItem(int id, SOItemConfig itemConfig, int quantity = 1)
     {
+        _id = id;
+
         Set(itemConfig, quantity);
     }
 
     public void Set(SOItemConfig itemConfig, int quantity = 1)
     {
         _itemConfig = itemConfig;
-        _itemStack = _itemConfig.Type == ItemType.Consumable
+        _itemStack = _itemConfig != null && _itemConfig.Type == ItemType.Consumable
                         ? new ItemStack(itemConfig.MaxStack, quantity)
                         : null;
     }

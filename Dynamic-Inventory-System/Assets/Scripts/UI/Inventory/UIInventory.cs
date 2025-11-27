@@ -1,98 +1,67 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using TMPro;
 
 public class UIInventory : MonoBehaviour
 {
-    [Header("References")]
-    [SerializeField] private Inventory inventory; 
-    [SerializeField] private GameObject slotPrefab; 
+    [SerializeField] private UIInventoryItemSlot _slotPrefab;
 
     [Header("Containers")]
-    [SerializeField] private RectTransform weaponsContainer;
-    [SerializeField] private RectTransform armorsContainer;
-    [SerializeField] private RectTransform consumablesContainer;
-    [SerializeField] private RectTransform miscsContainer;
+    [SerializeField] private RectTransform _weaponsContainer;
+    [SerializeField] private RectTransform _armorsContainer;
+    [SerializeField] private RectTransform _consumablesContainer;
+    [SerializeField] private RectTransform _miscsContainer;
 
-    [Header("UI Settings")]
-    [SerializeField] private bool clearBeforePopulate = true;
+    private int _slotIndex;
+    private ItemType _itemType;
 
-    // Keep track of created slots so we can update/destroy them
-    private List<GameObject> _activeSlots = new List<GameObject>();
+    private List<UIInventoryItemSlot> _weaponSlots;
+    private List<UIInventoryItemSlot> _armorSlots;
+    private List<UIInventoryItemSlot> _consumableSlots;
+    private List<UIInventoryItemSlot> _miscSlots;
 
-    private void Start()
+    public void Init(int weaponCapacity, int armorsCapacity, int consumableCapacity, int miscsCapacity)
     {
-        // RefreshAll();
+        // Create lists
+        _weaponSlots = CreateSlots(weaponCapacity, _weaponsContainer);
+        _armorSlots = CreateSlots(armorsCapacity, _armorsContainer);
+        _consumableSlots = CreateSlots(consumableCapacity, _consumablesContainer);
+        _miscSlots = CreateSlots(miscsCapacity, _miscsContainer);
     }
 
-    /// <summary>Call this anytime inventory changed to refresh UI.</summary>
-    // public void RefreshAll()
-    // {
-    //     ClearAllSlots();
-
-    //     PopulateCategory(ItemType.Weapon, weaponsContainer);
-    //     PopulateCategory(ItemType.Armor, armorsContainer);
-    //     PopulateConsumables(consumablesContainer);
-    //     PopulateCategory(ItemType.Misc, miscsContainer);
-    // }
-
-    private void ClearAllSlots()
+    public void AddItemSlot(int index, InventoryItem item)
     {
-        if (!clearBeforePopulate) return;
-
-        foreach (var go in _activeSlots)
-            Destroy(go);
-
-        _activeSlots.Clear();
+        switch (item.ItemType)
+        {
+            case ItemType.Weapon: _weaponSlots[index].Init(item); break;
+            case ItemType.Armor: _armorSlots[index].Init(item); break;
+            case ItemType.Consumable: _consumableSlots[index].Init(item); break;
+            case ItemType.Misc: _miscSlots[index].Init(item); break;
+        }
     }
 
-    // private void PopulateCategory(ItemType type, RectTransform container)
-    // {
-    //     var items = inventory.GetItems(type);
-    //     for (int i = 0; i < items.Count; i++)
-    //     {
-    //         var config = items[i];
-    //         var slotGO = Instantiate(slotPrefab, container);
-    //         _activeSlots.Add(slotGO);
-
-    //         var slotUI = slotGO.GetComponent<UIInventorySlot>();
-    //         if (slotUI != null)
-    //         {
-    //             slotUI.Setup(config, 0, i, type, this, tooltip); // non-stackables use count 0/1
-    //         }
-    //     }
-    // }
-
-    // private void PopulateConsumables(RectTransform container)
-    // {
-    //     var consumableList = inventory.GetItems(ItemType.Consumable);
-    //     var stacks = inventory.GetConsumableStacks();
-
-    //     for (int i = 0; i < consumableList.Count; i++)
-    //     {
-    //         var config = consumableList[i];
-    //         int stack = 0;
-    //         if (stacks.TryGetValue(config, out int s))
-    //             stack = s;
-
-    //         var slotGO = Instantiate(slotPrefab, container);
-    //         _activeSlots.Add(slotGO);
-
-    //         var slotUI = slotGO.GetComponent<UIInventorySlot>();
-    //         if (slotUI != null)
-    //         {
-    //             slotUI.Setup(config, stack, i, ItemType.Consumable, this, tooltip);
-    //         }
-    //     }
-    // }
-
-    // Example callback from slot when clicked
-    // You can expand this to equip, use, remove, etc.
-    public void OnSlotClicked(SOItemConfig config, int slotIndex, ItemType type)
+    private List<UIInventoryItemSlot> CreateSlots(int capacity, RectTransform parent)
     {
-        Debug.Log($"Slot clicked: {config.DisplayName} (index {slotIndex}) type {type}");
-        // Example: for consumable, call inventory.RemoveItem(slotIndex, ItemType.Consumable)
-        // Then call RefreshAll() to update UI.
+        List<UIInventoryItemSlot> slots = new(capacity);
+
+        for (int i = 0; i < capacity; i++)
+        {
+            UIInventoryItemSlot slot = Instantiate(_slotPrefab, parent);
+            slot.Clear();
+            slots.Add(slot);
+        }
+        return slots;
+    }
+
+    public void RemoveSlot(int slotIndex, ItemType itemType)
+    {
+        switch (itemType)
+        {
+            case ItemType.Weapon: _weaponSlots[slotIndex].Clear(); break;
+            case ItemType.Armor: _armorSlots[slotIndex].Clear(); break;
+            case ItemType.Consumable: _consumableSlots[slotIndex].Clear(); break;
+            case ItemType.Misc: _miscSlots[slotIndex].Clear(); break;
+        }
     }
 }
