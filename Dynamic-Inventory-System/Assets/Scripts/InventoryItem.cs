@@ -1,47 +1,45 @@
+using UnityEngine;
+
 [System.Serializable]
 public class InventoryItem
 {
-    private readonly int _id;
-    private SOItemConfig _itemConfig;
-    private ItemStack _itemStack;
+    private SOItemConfig _config;
+    private ItemStack _stack;
 
-    public int IndexID => _id;
-    public int Quantity => _itemStack == null ? 0 : _itemStack.CurrentStackSize;
-    public bool IsEmpty => _itemConfig == null;
-    public int SpaceLeft => _itemStack.RemainingStackSize;
-    public bool IsFull => _itemStack.IsFull;
-    public SOItemConfig ItemConfig => _itemConfig;
+    public bool IsEmpty => _config == null;
+    public SOItemConfig ItemConfig => _config;
 
-    public ItemType ItemType => _itemConfig.Type;
+    public int Quantity => _stack?.CurrentStackSize ?? 0;
+    public int SpaceLeft => _stack?.RemainingStackSize ?? 0;
+    public bool IsFull => _stack?.IsFull ?? true;
 
-    public InventoryItem(int id, SOItemConfig itemConfig, int quantity = 1)
+    public ItemType ItemType => _config.Type;
+    public Sprite Icon => _config.Icon;
+    public string DisplayName => _config.DisplayName;
+    public string Description => _config.Description;
+
+    public InventoryItem(SOItemConfig config, int quantity = 1)
     {
-        _id = id;
-
-        Set(itemConfig, quantity);
+        Set(config, quantity);
     }
 
-    public void Set(SOItemConfig itemConfig, int quantity = 1)
+    public void Set(SOItemConfig config, int quantity = 1)
     {
-        _itemConfig = itemConfig;
-        _itemStack = _itemConfig != null && _itemConfig.Type == ItemType.Consumable
-                        ? new ItemStack(itemConfig.MaxStack, quantity)
-                        : null;
+        _config = config;
+
+        if (config != null && config.IsStackable)
+            _stack = new ItemStack(config.MaxStack, quantity);
+        else
+            _stack = null;
     }
 
-    public void Reset()
+    public int AddQuantity(int amount) => _stack?.AddToStack(amount) ?? amount;
+
+    public int RemoveQuantity(int amount) => _stack?.RemoveFromStack(amount) ?? 0;
+
+    public void Clear()
     {
-        _itemConfig = null;
-        _itemStack = null;
+        _config = null;
+        _stack = null;
     }
-
-    /// <summary>
-    /// Adds quantity. Returns leftover that could not fit.
-    /// </summary>
-    public int AddQuantity(int amount) => _itemStack.AddToStack(amount);
-
-    /// <summary>
-    /// Removes quantity. Returns amount actually removed.
-    /// </summary>
-    public int RemoveQuantity(int amount) => _itemStack.RemoveFromStack(amount);
 }

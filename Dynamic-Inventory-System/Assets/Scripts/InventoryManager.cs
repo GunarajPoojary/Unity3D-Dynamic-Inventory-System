@@ -1,58 +1,49 @@
+using System;
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
 {
-    public static InventoryManager Instance { get; private set; }
+    [Header("Inventory Settings")]
+    [SerializeField] private int _weaponsCap = 40;
+    [SerializeField] private int _armorsCap = 40;
+    [SerializeField] private int _resourceItemsCap = 40;
 
-    [SerializeField] private int _weaponsCapacity = 40;
-    [SerializeField] private int _consumablesCapacity = 40;
-    [SerializeField] private int _armorsCapacity = 40;
-    [SerializeField] private int _miscsCapacity = 40;
-    [SerializeField] private UIInventory _uIInventory;
-    [SerializeField] private SOInventoryItemEventChannel _removeItemEvent;
+    [Header("UI References")]
+    [SerializeField] private UIInventory _uiInventory;
 
-    private InventoryController _inventoryController;
+    [Header("Global UI Event Channels")]
+    [SerializeField] private SOPopupEventChannel _popupChannel;
+    [SerializeField] private SOItemConfigEventChannel _pickupEvent;
+
+    private InventoryPresenter _presenter;
 
     private void Awake()
     {
-        Instance = this;
-
-        _inventoryController = new InventoryController(_weaponsCapacity, _armorsCapacity, _consumablesCapacity, _miscsCapacity, _uIInventory);
-        _inventoryController.AssignEventReference(_removeItemEvent);
+        _presenter = new InventoryPresenter(
+            _weaponsCap,
+            _armorsCap,
+            _resourceItemsCap,
+            _uiInventory,
+            _popupChannel
+        );
     }
+
+
 
     private void OnEnable()
     {
-        _inventoryController.SubscribeToEvents();
+        _presenter.Subscribe();
+        _pickupEvent.OnEventRaised += AddItem;
+    }
+
+    private void AddItem(SOItemConfig config)
+    {
+        _presenter.AddItem(config);
     }
 
     private void OnDisable()
     {
-        _inventoryController.UnsubscribeFromEvents();
-    }
-
-    public AddItemResult AddItem(SOItemConfig config, int amount = 1)
-    {
-        AddItemResult result = _inventoryController.AddItem(config, amount);
-
-        if (!result.Success)
-        {
-            Debug.Log($"Failed to add item: {config.DisplayName}. " +
-                      $"Inventory full. Leftover: {result.Leftover}");
-        }
-        else
-        {
-            if (result.Leftover == 0)
-            {
-                Debug.Log($"✔ Added {result.Added}x {config.DisplayName}");
-            }
-            else
-            {
-                Debug.Log($"Partially added {result.Added}/{amount} of {config.DisplayName}, " +
-                          $"{result.Leftover} could not fit.");
-            }
-        }
-
-        return result;
+        _presenter.Unsubscribe();
+        _pickupEvent.OnEventRaised -= AddItem;
     }
 }

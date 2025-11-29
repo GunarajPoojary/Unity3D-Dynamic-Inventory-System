@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
@@ -6,62 +7,101 @@ using UnityEngine.UI;
 public class UIInventory : MonoBehaviour
 {
     [SerializeField] private UIInventoryItemSlot _slotPrefab;
+    [SerializeField] private GameObject _itemOverviewPanel;
+    [SerializeField] private InventoryTabButton[] _itemTabs;
+    [SerializeField] private TMP_Text _itemTabText;
 
     [Header("Containers")]
     [SerializeField] private RectTransform _weaponsContainer;
     [SerializeField] private RectTransform _armorsContainer;
-    [SerializeField] private RectTransform _consumablesContainer;
-    [SerializeField] private RectTransform _miscsContainer;
+    [SerializeField] private RectTransform _resourceItemsContainer;
 
-    private int _slotIndex;
-    private ItemType _itemType;
+    [SerializeField] private TMP_Text _titleText;
+    [SerializeField] private TMP_Text _descriptionText;
+    [SerializeField] private Image _icon;
+    [SerializeField] private Button _sellButton;
+
+    public event Action<int, ItemType> OnRemoveItemRequested;
 
     private List<UIInventoryItemSlot> _weaponSlots;
     private List<UIInventoryItemSlot> _armorSlots;
-    private List<UIInventoryItemSlot> _consumableSlots;
-    private List<UIInventoryItemSlot> _miscSlots;
+    private List<UIInventoryItemSlot> _resourceSlots;
 
-    public void Init(int weaponCapacity, int armorsCapacity, int consumableCapacity, int miscsCapacity)
+    private ItemType _selectedType;
+    private int _selectedSlot;
+
+    private void OnEnable()
     {
-        // Create lists
-        _weaponSlots = CreateSlots(weaponCapacity, _weaponsContainer);
-        _armorSlots = CreateSlots(armorsCapacity, _armorsContainer);
-        _consumableSlots = CreateSlots(consumableCapacity, _consumablesContainer);
-        _miscSlots = CreateSlots(miscsCapacity, _miscsContainer);
+        _sellButton.onClick.AddListener(RequestRemove);
+
+        foreach (InventoryTabButton tab in _itemTabs)
+            tab.OnSelectTab += t => _itemTabText.text = t.ToString();
+    }
+
+    private void OnDisable()
+    {
+        _sellButton.onClick.RemoveListener(RequestRemove);
+        
+        foreach (InventoryTabButton tab in _itemTabs)
+            tab.OnSelectTab -= t => _itemTabText.text = t.ToString();
+    }
+
+    public void Init(int wc, int ac, int cc)
+    {
+        _weaponSlots = CreateSlots(wc, _weaponsContainer);
+        _armorSlots = CreateSlots(ac, _armorsContainer);
+        _resourceSlots = CreateSlots(cc, _resourceItemsContainer);
+
+        _itemOverviewPanel.SetActive(false);
+    }
+
+    private List<UIInventoryItemSlot> CreateSlots(int cap, RectTransform parent)
+    {
+        List<UIInventoryItemSlot> list = new(cap);
+        for (int i = 0; i < cap; i++)
+        {
+            UIInventoryItemSlot slot = Instantiate(_slotPrefab, parent);
+            slot.Clear();
+            slot.OnItemSelected += HandleSelection;
+            list.Add(slot);
+        }
+        return list;
+    }
+
+    private void HandleSelection(int index, InventoryItem item)
+    {
+        _selectedSlot = index;
+        _selectedType = item.ItemType;
+
+        _itemOverviewPanel.SetActive(true);
+        _titleText.text = item.DisplayName;
+        _descriptionText.text = item.Description;
+        _icon.sprite = item.Icon;
+    }
+
+    private void RequestRemove()
+    {
+        OnRemoveItemRequested?.Invoke(_selectedSlot, _selectedType);
+        _itemOverviewPanel.SetActive(false);
     }
 
     public void AddItemSlot(int index, InventoryItem item)
     {
         switch (item.ItemType)
         {
-            case ItemType.Weapon: _weaponSlots[index].Init(item); break;
-            case ItemType.Armor: _armorSlots[index].Init(item); break;
-            case ItemType.Consumable: _consumableSlots[index].Init(item); break;
-            case ItemType.Misc: _miscSlots[index].Init(item); break;
+            case ItemType.Weapon: _weaponSlots[index].Init(index, item); break;
+            case ItemType.Armor: _armorSlots[index].Init(index, item); break;
+            case ItemType.Resource: _resourceSlots[index].Init(index, item); break;
         }
     }
 
-    private List<UIInventoryItemSlot> CreateSlots(int capacity, RectTransform parent)
+    public void RemoveSlot(int index, ItemType type)
     {
-        List<UIInventoryItemSlot> slots = new(capacity);
-
-        for (int i = 0; i < capacity; i++)
+        switch (type)
         {
-            UIInventoryItemSlot slot = Instantiate(_slotPrefab, parent);
-            slot.Clear();
-            slots.Add(slot);
-        }
-        return slots;
-    }
-
-    public void RemoveSlot(int slotIndex, ItemType itemType)
-    {
-        switch (itemType)
-        {
-            case ItemType.Weapon: _weaponSlots[slotIndex].Clear(); break;
-            case ItemType.Armor: _armorSlots[slotIndex].Clear(); break;
-            case ItemType.Consumable: _consumableSlots[slotIndex].Clear(); break;
-            case ItemType.Misc: _miscSlots[slotIndex].Clear(); break;
+            case ItemType.Weapon: _weaponSlots[index].Clear(); break;
+            case ItemType.Armor: _armorSlots[index].Clear(); break;
+            case ItemType.Resource: _resourceSlots[index].Clear(); break;
         }
     }
 }

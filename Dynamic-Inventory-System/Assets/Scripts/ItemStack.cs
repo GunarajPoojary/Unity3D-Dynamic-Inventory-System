@@ -4,43 +4,35 @@ public class ItemStack
 {
     public int MaxStack { get; private set; }
     public int CurrentStackSize { get; private set; } = 1;
-    public int RemainingStackSize => MaxStack - CurrentStackSize;
-    public bool IsFull => CurrentStackSize == MaxStack; 
 
-    public ItemStack(int maxStack, int startingAmount = 1)
+    public int RemainingStackSize => MaxStack - CurrentStackSize;
+    public bool IsFull => CurrentStackSize >= MaxStack;
+
+    public ItemStack(int maxStack, int amount = 1)
     {
         MaxStack = Mathf.Max(1, maxStack);
-
-        CurrentStackSize = Mathf.Clamp(startingAmount, 1, MaxStack);
+        CurrentStackSize = Mathf.Clamp(amount, 1, MaxStack);
     }
 
-    /// <summary>
-    /// Attempts to add amount to the stack.
-    /// Returns the leftover amount that could not fit.
-    /// </summary>
     public int AddToStack(int amount)
     {
-        if (amount <= 0)
-            return 0;
+        if (amount <= 0) return 0;
 
         int spaceLeft = MaxStack - CurrentStackSize;
-        int amountToAdd = Mathf.Min(amount, spaceLeft);
+        int addAmount = Mathf.Min(amount, spaceLeft);
 
-        CurrentStackSize += amountToAdd;
-        return amount - amountToAdd; // leftover
+        CurrentStackSize += addAmount;
+
+        return amount - addAmount;
     }
 
-    /// <summary>
-    /// Removes from stack, returns amount actually removed.
-    /// </summary>
     public int RemoveFromStack(int amount)
     {
-        if (amount <= 0)
-            return 0;
+        if (amount <= 0) return 0;
 
-        int amountToRemove = Mathf.Min(amount, CurrentStackSize);
-        CurrentStackSize -= amountToRemove;
+        int removed = Mathf.Min(amount, CurrentStackSize);
+        CurrentStackSize -= removed;
 
-        return amountToRemove;
+        return removed;
     }
 }

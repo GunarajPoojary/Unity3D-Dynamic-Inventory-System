@@ -2,40 +2,31 @@ using UnityEngine;
 
 public class UITabGroup : MonoBehaviour
 {
-    [SerializeField] private UITabButton[] _tabButtons;
-    [SerializeField] private UITabPage[] _tabPages;
+    [SerializeField] private UITabButton[] _buttons;
+    [SerializeField] private UITabPage[] _pages;
 
-    private int _currentIndex = 0;
+    private int _current = 0;
 
     private void Start()
     {
-        for (int i = 0; i < _tabButtons.Length; i++)
-        {
-            _tabButtons[i].SetIndex(i, this);
-        }
+        for (int i = 0; i < _buttons.Length; i++)
+            _buttons[i].SetIndex(i, this);
 
-        // Auto-bind pages if count matches buttons
-        if (_tabPages.Length == _tabButtons.Length)
-            SelectTab(_currentIndex);
+        if (_pages.Length == _buttons.Length)
+            SelectTab(_current);
     }
 
-    /// <summary>Select tab by index.</summary>
     public void SelectTab(int index)
     {
-        if (index < 0 || index >= _tabButtons.Length)
+        if (index < 0 || index >= _buttons.Length)
             return;
 
-        DeselectPreviousTab();
+        _pages[_current].SetVisible(false);
+        _buttons[_current].SetState(false);
 
-        _tabPages[index].SetVisible(true);
-        _tabButtons[index].SetState(true);
+        _pages[index].SetVisible(true);
+        _buttons[index].SetState(true);
 
-        _currentIndex = index;
-    }
-
-    private void DeselectPreviousTab()
-    {
-        _tabPages[_currentIndex].SetVisible(false);
-        _tabButtons[_currentIndex].SetState(false);
+        _current = index;
     }
 }

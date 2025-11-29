@@ -6,38 +6,33 @@ using System;
 
 public class UIInventoryItemSlot : MonoBehaviour, IPointerClickHandler
 {
-    [Header("UI Elements")]
     [SerializeField] private Image _icon;
     [SerializeField] private TMP_Text _stackText;
-    [SerializeField] private SOInventoryItemEventChannel _slotSelectedEvent;
 
+    private int _slotIndex;
     private InventoryItem _item;
+
+    public event Action<int, InventoryItem> OnItemSelected;
 
     public bool IsEmpty => _item == null;
 
-    public void Init(InventoryItem item)
+    public void Init(int slotIndex, InventoryItem item)
     {
+        _slotIndex = slotIndex;
         _item = item;
 
-        if (_icon != null)
-            _icon.sprite = _item.ItemConfig.Icon;
-
-        SetStackText(_item.Quantity);
+        _icon.sprite = item.Icon;
+        _stackText.text = item.Quantity > 1 ? item.Quantity.ToString() : "";
 
         gameObject.SetActive(true);
-    }
-
-    private void SetStackText(int quantity)
-    {
-        _stackText.text = quantity > 0 ? quantity.ToString() : "";
     }
 
     public void Clear()
     {
         _item = null;
-
         gameObject.SetActive(false);
     }
 
-    public void OnPointerClick(PointerEventData eventData) => _slotSelectedEvent.RaiseEvent(_item);
+    public void OnPointerClick(PointerEventData e)
+        => OnItemSelected?.Invoke(_slotIndex, _item);
 }

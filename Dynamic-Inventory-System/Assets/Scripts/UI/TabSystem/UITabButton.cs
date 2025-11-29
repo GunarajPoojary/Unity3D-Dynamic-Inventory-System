@@ -4,9 +4,9 @@ using UnityEngine.UI;
 
 public class UITabButton : MonoBehaviour, IPointerClickHandler
 {
-    [SerializeField] private Image _background;
-    [SerializeField] private Color _normalColor = Color.white;
-    [SerializeField] private Color _selectedColor = Color.cyan;
+    [SerializeField] private Image _bg;
+    [SerializeField] private Color _normal = Color.white;
+    [SerializeField] private Color _selected = Color.cyan;
 
     private UITabGroup _group;
     private int _index;
@@ -17,15 +17,15 @@ public class UITabButton : MonoBehaviour, IPointerClickHandler
         _group = group;
     }
 
-    public void OnPointerClick(PointerEventData eventData)
+    public virtual void OnPointerClick(PointerEventData e)
     {
         _group.SelectTab(_index);
         SetState(true);
     }
 
-    public void SetState(bool selected)
+    public void SetState(bool active)
     {
-        if (_background != null)
-            _background.color = selected ? _selectedColor : _normalColor;
+        if (_bg != null)
+            _bg.color = active ? _selected : _normal;
     }
 }

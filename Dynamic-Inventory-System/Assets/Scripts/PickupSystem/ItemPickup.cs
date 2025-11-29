@@ -2,13 +2,12 @@ using UnityEngine;
 
 public class ItemPickup : MonoBehaviour
 {
-    [SerializeField] private SOItemConfig _itemConfig;
+    [SerializeField] private SOItemConfig _config;
+    [SerializeField] private SOItemConfigEventChannel _pickupEvent;
 
-    public SOItemConfig PickUp() => _itemConfig;
-
-    [ContextMenu("Add Item To Inventory")]
-    private void AddItemToInventory()
+[ContextMenu("Pickup")]
+    public void PickUp()
     {
-        InventoryManager.Instance.AddItem(_itemConfig);
+        _pickupEvent.RaiseEvent(_config);
     }
 }
